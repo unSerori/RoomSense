@@ -17,6 +17,21 @@
 6. プロジェクトを選択
 7. Add
 
+### 環境切り替え方法
+
+1. 下のバーから環境を選択
+2. ビルド
+3. `>PlatformIO: Rebuild IntelliSense Index`
+
+うまく切り替わらない場合は1の環境を選択した後に
+
+```bash
+pio platform uninstall espressif32
+pio platform install espressif32
+```
+
+を実行
+
 ### その他操作
 
 - チェック: ビルド

@@ -5,6 +5,7 @@
 */
 
 // #include文
+#include <Arduino.h>
 
 // ピン番号をマクロで定義
 #define LED_PIN 15         // 赤色LED

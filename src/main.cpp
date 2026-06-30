@@ -46,6 +46,19 @@ void ledFlash(int ledPin, int delayTime)
   delay(delayTime);
 }
 
+/**
+   ビープ音の初期設定を行う
+ * @param ledPin LEDを接続しているGPIOピン番号
+ * @param delayTime LEDを点灯させておく時間
+ * @return なし
+*/
+// bool ledcAttachChannel(uint8_t pin, uint32_t freq, uint8_t resolution, int8_t channel)
+// {
+//   delay(delayTime);
+// }
+// ledcAttachPin
+// ledcSetup
+
 void setup()
 {
   Serial.begin(115200);

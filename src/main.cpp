@@ -48,16 +48,37 @@ void ledFlash(int ledPin, int delayTime)
 
 /**
    ビープ音の初期設定を行う
- * @param ledPin LEDを接続しているGPIOピン番号
- * @param delayTime LEDを点灯させておく時間
- * @return なし
+ * @param pin LEDCのGPIOピン番号
+ * @param freq freqPWMの周波数
+ * @param resolution LEDCチャンネルの解像度（範囲は1~14bit、ESP32の場合は1~20bit）
+ * @param channel LEDCチャネル
+ * @return 設定が完了したらなら真
 */
-// bool ledcAttachChannel(uint8_t pin, uint32_t freq, uint8_t resolution, int8_t channel)
-// {
-//   delay(delayTime);
-// }
-// ledcAttachPin
-// ledcSetup
+bool ledcAttachChannel(uint8_t pin, uint32_t freq, uint8_t resolution, int8_t channel)
+{
+  // 簡易的なバリデーション
+  if (!digitalPinIsValid(pin))
+  {
+    return false;
+  }
+  if (resolution < 1 || resolution > SOC_LEDC_TIMER_BIT_WIDE_NUM)
+  {
+    return false;
+  }
+  if (channel < 0 || channel >= SOC_LEDC_CHANNEL_NUM)
+  {
+    return false;
+  }
+
+  uint32_t actualFreq = ledcSetup(channel, freq, resolution);
+  if (actualFreq == 0)
+  {
+    return false;
+  }
+
+  ledcAttachPin(pin, channel);
+  return true;
+}
 
 void setup()
 {

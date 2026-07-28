@@ -27,9 +27,9 @@ float humidityValue;    // 環境湿度[%]
 
 void beep(int freq, int time)
 {
-  ledcWriteTone(BUZZER_PIN, freq); // freqHzの音を出す
+  ledcWriteTone(BUZZER_CH, freq); // freqHzの音を出す
   delay(time);
-  ledcWriteTone(BUZZER_PIN, 0); // 消音する
+  ledcWriteTone(BUZZER_CH, 0); // 消音する
 }
 
 /**
@@ -92,7 +92,7 @@ void setup()
   pinMode(BATT_PIN, INPUT);
 
   // MOSFETをオンにして電源を供給する
-  digitalWrite(MOSFET_GATE_PIN, LOW); // LOWでMOSFETがオンする
+  digitalWrite(MOSFET_GATE_PIN, HIGH); // T2（NPN）がONになり、Pch MOSFETのゲートがLOWに引き下げられてONになる。
 
   // ビープ音初期設定
   ledcAttachChannel(BUZZER_PIN, 5000, 8, BUZZER_CH);
@@ -117,6 +117,7 @@ void loop()
 
   // 計測値を表示する
   Serial.printf("\n------計測値------\n");
+
 
   // チャタリング防止
   delay(10);

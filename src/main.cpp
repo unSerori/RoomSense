@@ -6,6 +6,7 @@
 
 // #include文
 #include <Arduino.h>
+#include <ST7032_asukiaaa.h>
 
 // ピン番号をマクロで定義
 #define LED_PIN 15         // 赤色LED
@@ -22,6 +23,9 @@
 float batteryValue;     // バッテリ電圧[V]
 float temperatureValue; // 環境温度[℃]
 float humidityValue;    // 環境湿度[%]
+
+// オブジェクト作成
+ST7032_asukiaaa lcd;
 
 // オブジェクト作成
 
@@ -94,6 +98,21 @@ void setup()
   // MOSFETをオンにして電源を供給する
   digitalWrite(MOSFET_GATE_PIN, HIGH); // T2（NPN）がONになり、Pch MOSFETのゲートがLOWに引き下げられてONになる。
 
+  // st7032 lcdの初期化（AQM0802A-FLW-GBW）
+  Wire.begin(21, 22);
+  lcd.setWire(&Wire);
+  lcd.begin(8, 2);
+  // lcd.setContrast(30);
+
+  // オープニング表示
+  lcd.clear();
+  char line1[9] = "Room \\";
+  char line2[9] = "Sense v1";
+  lcd.setCursor(0,0);
+  lcd.print(line1);
+  lcd.setCursor(0,1);
+  lcd.print(line2);
+
   // ビープ音初期設定
   ledcAttachChannel(BUZZER_PIN, 5000, 8, BUZZER_CH);
 
@@ -109,6 +128,7 @@ void setup()
 
   // ハードウェアの安定待ち
   delay(2000);
+  lcd.clear();
 }
 
 void loop()

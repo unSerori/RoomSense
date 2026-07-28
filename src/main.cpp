@@ -102,7 +102,7 @@ void setup()
   Wire.begin(21, 22);
   lcd.setWire(&Wire);
   lcd.begin(8, 2);
-  // lcd.setContrast(30);
+  lcd.setContrast(25); // 0~40
 
   // オープニング表示
   lcd.clear();

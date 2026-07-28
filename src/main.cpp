@@ -98,6 +98,7 @@ void configureDht() {
     if (result > 0) {
       Serial.printf("Temp: %.1f°C, Humid: %.1f%%\n", dht.getTemperature(), dht.getHumidity());
 
+      // FIX: 「DHT11センサーデータの取得ができない問題」おそらくセンサー側の問題のため、ディスプレイへの表示処理はあとでやる
     } else
     {
       Serial.printf("Sensor error: %s\n", dht.getError());
@@ -172,13 +173,13 @@ void setup()
     Serial.printf("DHTPIN level: %d\n", digitalRead(DHTPIN));
     delay(200);
   }
-  
 }
 
 // ループ
 
 void loop()
 {
+  // 表示処理
   static uint32_t lastMillis = 0;
   if (millis() - lastMillis > SENSOR_INTERVAL_MS)
   {

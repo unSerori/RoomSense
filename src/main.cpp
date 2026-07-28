@@ -7,6 +7,7 @@
 // #include文
 #include <Arduino.h>
 #include <ST7032_asukiaaa.h>
+#include <esp32DHT.hpp>
 
 // ピン番号をマクロで定義
 #define LED_PIN 15         // 赤色LED
@@ -15,9 +16,10 @@
 #define MOSFET_GATE_PIN 25 // MOSFETのゲート
 #define DHTPIN 5           // DHT11データ
 #define BATT_PIN 34        // バッテリー電圧アナログ入力
-
 #define BUZZER_PIN 23 // ブザーを接続するピン
 #define BUZZER_CH 0   // ブザーを接続するチャンネル
+#define BUTTON_DEBOUNCE_MS 20
+#define SENSOR_INTERVAL_MS 2000
 
 // 変数宣言
 float batteryValue;     // バッテリ電圧[V]
@@ -26,8 +28,7 @@ float humidityValue;    // 環境湿度[%]
 
 // オブジェクト作成
 ST7032_asukiaaa lcd;
-
-// オブジェクト作成
+DHT11 dht;
 
 void beep(int freq, int time)
 {
@@ -84,6 +85,36 @@ bool ledcAttachChannel(uint8_t pin, uint32_t freq, uint8_t resolution, int8_t ch
   return true;
 }
 
+// データ取得処理の設定
+
+/**
+  データ取得処理を行うDHTの設定を行う
+ * @return なし
+*/
+void configureDht() {
+  dht.setup(DHTPIN);
+
+  dht.setCallback([](int8_t result) {
+    if (result > 0) {
+      Serial.printf("Temp: %.1f°C, Humid: %.1f%%\n", dht.getTemperature(), dht.getHumidity());
+
+    } else
+    {
+      Serial.printf("Sensor error: %s\n", dht.getError());
+    }
+#if DHT_ENABLE_RAW
+    // print raw RMT timing data, converted to microseconds: 42 values: start, 40x data, stop
+    uint32_t array[42] = {0};
+    dht.getRawData(array);
+    for (uint8_t i = 0; i < 42; ++i) {
+      Serial.printf("%u: %u\n", i, array[i]);
+    }
+#endif
+
+  });
+}
+
+
 void setup()
 {
   Serial.begin(115200);
@@ -113,6 +144,9 @@ void setup()
   lcd.setCursor(0,1);
   lcd.print(line2);
 
+  // データ取得処理の設定
+  configureDht();
+
   // ビープ音初期設定
   ledcAttachChannel(BUZZER_PIN, 5000, 8, BUZZER_CH);
 
@@ -129,16 +163,29 @@ void setup()
   // ハードウェアの安定待ち
   delay(2000);
   lcd.clear();
+
+  // TODO: デバッグ用
+  Serial.println("== Data line idle check. ==");
+  pinMode(DHTPIN, INPUT_PULLUP);
+  for (int i = 0; i < 10; i++)
+  {
+    Serial.printf("DHTPIN level: %d\n", digitalRead(DHTPIN));
+    delay(200);
+  }
+  
 }
+
+// ループ
 
 void loop()
 {
-  // センサーデータを取得する処理を記述する
-
-  // 計測値を表示する
-  Serial.printf("\n------計測値------\n");
-
+  static uint32_t lastMillis = 0;
+  if (millis() - lastMillis > SENSOR_INTERVAL_MS)
+  {
+    lastMillis = millis();
+    dht.read();
+  }
 
   // チャタリング防止
-  delay(10);
+  delay(BUTTON_DEBOUNCE_MS);
 }

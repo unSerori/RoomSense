@@ -7,32 +7,33 @@
 // #include文
 #include <Arduino.h>
 #include <ST7032_asukiaaa.h>
-#include <esp32DHT.hpp>
+#include "DHT.h"
 
 // ピン番号をマクロで定義
 #define LED_PIN 15         // 赤色LED
 #define SW1_PIN 17         // タクトスイッチ
 #define SW2_PIN 0          // タクトスイッチ
 #define MOSFET_GATE_PIN 25 // MOSFETのゲート
-#define DHTPIN 5           // DHT11データ
+#define DHTPIN 26           // DHT11のDATA
+#define DHTTYPE DHT11
 #define BATT_PIN 34        // バッテリー電圧アナログ入力
 #define BUZZER_PIN 23 // ブザーを接続するピン
 #define BUZZER_CH 0   // ブザーを接続するチャンネル
 #define BUTTON_DEBOUNCE_MS 20UL
-#define SENSOR_INTERVAL_MS 2000UL
+#define SENSOR_INTERVAL_MS 5000UL
 #ifndef AUTO_POWER_OFF_MS
 #define AUTO_POWER_OFF_MS 30000UL
 #endif
 
 // 変数宣言
-float batteryValue;     // バッテリ電圧[V]
 float temperatureValue; // 環境温度[℃]
 float humidityValue;    // 環境湿度[%]
+float batteryValue;     // バッテリ電圧[V]
 uint32_t lastActivityMillis = 0;
 
 // オブジェクト作成
 ST7032_asukiaaa lcd;
-DHT11 dht;
+DHT dht(DHTPIN, DHTTYPE);
 
 // 初期化
 
@@ -91,33 +92,31 @@ bool ledcAttachChannel(uint8_t pin, uint32_t freq, uint8_t resolution, int8_t ch
   return true;
 }
 
-// データ取得処理の設定
+void readSensor() {
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+  if (isnan(t) || isnan(h))
+  {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
 
-/**
-  データ取得処理を行うDHTの設定を行う
- * @return なし
-*/
-void configureDht() {
-  dht.setup(DHTPIN);
+  Serial.printf("Temperature: %f, Humidity: %f\n", t, h);
+  temperatureValue = t;
+  humidityValue = h;
+}
 
-  dht.setCallback([](int8_t result) {
-    if (result > 0) {
-      Serial.printf("Temp: %.1f°C, Humid: %.1f%%\n", dht.getTemperature(), dht.getHumidity());
+void showSensorData() {
+  char line1[9];
+  snprintf(line1, sizeof(line1), "T: %4.1fC", temperatureValue);
+  char line2[9];
+  snprintf(line2, sizeof(line2), "H: %4.1f%%", humidityValue);
 
-      // FIX: 「DHT11センサーデータの取得ができない問題」おそらくセンサー側の問題のため、ディスプレイへの表示処理はあとでやる
-    } else
-    {
-      Serial.printf("Sensor error: %s\n", dht.getError());
-    }
-#if DHT_ENABLE_RAW
-    // print raw RMT timing data, converted to microseconds: 42 values: start, 40x data, stop
-    uint32_t array[42] = {0};
-    dht.getRawData(array);
-    for (uint8_t i = 0; i < 42; ++i) {
-      Serial.printf("%u: %u\n", i, array[i]);
-    }
-#endif
-  });
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(line1);
+  lcd.setCursor(0,1);
+  lcd.print(line2);
 }
 
 /**
@@ -127,6 +126,7 @@ void configureDht() {
 void resetActivityTime(){
   lastActivityMillis = millis();
 }
+
 
 void setup()
 {
@@ -158,7 +158,7 @@ void setup()
   lcd.print(line2);
 
   // データ取得処理の設定
-  configureDht();
+  dht.begin();
 
   // ビープ音初期設定
   ledcAttachChannel(BUZZER_PIN, 5000, 8, BUZZER_CH);
@@ -175,17 +175,10 @@ void setup()
 
   // ハードウェアの安定待ち
   delay(2000);
-  lcd.clear();
+  // 最初に一回表示
+  readSensor();
+  showSensorData();
   resetActivityTime();
-
-  // TODO: デバッグ用
-  Serial.println("== Data line idle check. ==");
-  pinMode(DHTPIN, INPUT_PULLUP);
-  for (int i = 0; i < 10; i++)
-  {
-    Serial.printf("DHTPIN level: %d\n", digitalRead(DHTPIN));
-    delay(200);
-  }
 }
 
 // ループ
@@ -218,7 +211,8 @@ void loop()
   if (millis() - lastMillis > SENSOR_INTERVAL_MS)
   {
     lastMillis = millis();
-    dht.read();
+    readSensor();
+    showSensorData();
   }
 
   // ボタン更新のなさを記録

@@ -17,6 +17,10 @@
 6. プロジェクトを選択
 7. Add
 
+### 3.x系をつかいたい場合
+
+[リリースページ](https://github.com/pioarduino/platform-espressif32/releases)にアクセスし、使いたいバージョンのzipのリンクを取得。（`https://github.com/pioarduino/platform-espressif32/releases/download/x.y.z/platform-espressif32.zip`形式）
+
 ### 環境切り替え方法
 
 1. 下のバーから環境を選択
@@ -31,6 +35,12 @@ pio platform install espressif32
 ```
 
 を実行
+
+### なんかおかしい場合は、
+
+```bash
+rm -rf ~/.platformio
+```
 
 ### その他操作
 

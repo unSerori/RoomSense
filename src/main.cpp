@@ -18,17 +18,23 @@
 #define BATT_PIN 34        // バッテリー電圧アナログ入力
 #define BUZZER_PIN 23 // ブザーを接続するピン
 #define BUZZER_CH 0   // ブザーを接続するチャンネル
-#define BUTTON_DEBOUNCE_MS 20
-#define SENSOR_INTERVAL_MS 2000
+#define BUTTON_DEBOUNCE_MS 20UL
+#define SENSOR_INTERVAL_MS 2000UL
+#ifndef AUTO_POWER_OFF_MS
+#define AUTO_POWER_OFF_MS 30000UL
+#endif
 
 // 変数宣言
 float batteryValue;     // バッテリ電圧[V]
 float temperatureValue; // 環境温度[℃]
 float humidityValue;    // 環境湿度[%]
+uint32_t lastActivityMillis = 0;
 
 // オブジェクト作成
 ST7032_asukiaaa lcd;
 DHT11 dht;
+
+// 初期化
 
 void beep(int freq, int time)
 {
@@ -111,10 +117,16 @@ void configureDht() {
       Serial.printf("%u: %u\n", i, array[i]);
     }
 #endif
-
   });
 }
 
+/**
+  入力操作があった時に呼び出し、グローバルな値を更新する。
+ * @return なし
+*/
+void resetActivityTime(){
+  lastActivityMillis = millis();
+}
 
 void setup()
 {
@@ -164,6 +176,7 @@ void setup()
   // ハードウェアの安定待ち
   delay(2000);
   lcd.clear();
+  resetActivityTime();
 
   // TODO: デバッグ用
   Serial.println("== Data line idle check. ==");
@@ -177,6 +190,27 @@ void setup()
 
 // ループ
 
+/**
+  電源を切る
+ * @return なし
+*/
+void powerOff(){
+  // UI
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("PwrOff..");
+  beep(1000, 150);
+  beep(500, 150);
+  Serial.println("PwrOff..");
+
+  // 終了
+  digitalWrite(MOSFET_GATE_PIN, LOW); // TODO: 実際に起動するか
+  while (true) // 待機
+  {
+    delay(1000);
+  }
+}
+
 void loop()
 {
   // 表示処理
@@ -185,6 +219,19 @@ void loop()
   {
     lastMillis = millis();
     dht.read();
+  }
+
+  // ボタン更新のなさを記録
+  if (digitalRead(SW1_PIN) == LOW || digitalRead(SW2_PIN) == LOW) // HACK: もっと綺麗にしたい
+  {
+    Serial.printf("lastActivityMillis: %lu\n", lastActivityMillis);
+    resetActivityTime();
+  }
+
+  // 更新がなければオートパワーオフ
+  if (millis() - lastActivityMillis > AUTO_POWER_OFF_MS)
+  {
+    powerOff();
   }
 
   // チャタリング防止

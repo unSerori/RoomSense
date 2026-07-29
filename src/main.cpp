@@ -222,9 +222,9 @@ void loop()
   }
 
   // ボタン更新のなさを記録
+  Serial.printf("Idle time: %lu\n", millis() - lastActivityMillis);
   if (digitalRead(SW1_PIN) == LOW || digitalRead(SW2_PIN) == LOW) // HACK: もっと綺麗にしたい
   {
-    Serial.printf("lastActivityMillis: %lu\n", lastActivityMillis);
     resetActivityTime();
   }
 

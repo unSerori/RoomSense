@@ -11,7 +11,7 @@
 
 // ピン番号をマクロで定義
 #define LED_PIN 15         // 赤色LED
-#define SW1_PIN 17         // タクトスイッチ
+#define SW1_PIN 16         // タクトスイッチ
 #define SW2_PIN 0          // タクトスイッチ
 #define MOSFET_GATE_PIN 25 // MOSFETのゲート
 #define DHTPIN 26           // DHT11のDATA
